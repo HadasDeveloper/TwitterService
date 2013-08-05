@@ -34,6 +34,8 @@ namespace oAuthTwitterWrapper
                 //Console.Write("Utility.RequstJson : WebException = " + e.Status); 
                 EventLogWriter logWriter = new EventLogWriter("oAuthTwitterWrapper");
                 logWriter.WriteErrorToEventLog("Utility.RequstJson : WebException = " + e.Status);
+
+                json = string.Format("Error: {0}", e.Message);
             }
 
 			return json;

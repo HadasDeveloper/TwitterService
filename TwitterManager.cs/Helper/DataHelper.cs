@@ -8,7 +8,7 @@ namespace TwitterManager.Helper
 {
     public class DataHelper
     {
-        private const string ConnectionString = " Data Source=tcp:esql2k801.discountasp.net;Initial Catalog=SQL2008_856748_ntrlabs;User ID=SQL2008_856748_ntrlabs_user;Password=bbking;connection timeout=3600";
+        private const string ConnectionString = " Data Source=tcp:esql2k801.discountasp.net;Initial Catalog=SQL2008_856748_ntrlabs;User ID=SQL2008_856748_ntrlabs_user;Password=bbking;connection timeout=36000";
         private const string DefaultDB = "SQL2008_856748_ntrlabs";
 
         [ThreadStatic]
@@ -150,7 +150,12 @@ namespace TwitterManager.Helper
         {
             ExecuteSQL(string.Format(StoredProcedures.SqlUpdateScreenNames_Deactivate, DateTime.Now, screenName));
         }
-        
+
+        public static void UpdateQueriesTracking(string screenName, string error, string hostName, int runId, int rowesCount)
+        {
+            ExecuteSQL(string.Format(StoredProcedures.SqlUpdateQueriesTracking, hostName, screenName, DateTime.Now, error, runId, rowesCount));
+        }
+
         public static DataTable GetMinMessageIdForUser(string screenName)
         {
             return ExecuteSqlForData(string.Format(StoredProcedures.SqlGetMinMessageIdForUser, screenName)) ?? new DataTable();
@@ -170,7 +175,12 @@ namespace TwitterManager.Helper
         {
             return ExecuteSqlForData(string.Format(StoredProcedures.SqlGetoAuthData, hostname)) ?? new DataTable();
         }
-        
+
+        public static DataTable GetMaxRunID()
+        {
+            return ExecuteSqlForData(string.Format(StoredProcedures.SqlGetMaxRunId)) ?? new DataTable();
+        }
+
         public static bool ExecuteSQL(string sql)
         {
             return ExecuteSQL(sql, CommandType.Text, null);

@@ -54,6 +54,7 @@
     <Compile Include="OAuthTwitterWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TwitAuthenticateResponse.cs" />
+    <Compile Include="TwitterData.cs" />
     <Compile Include="Utility.cs" />
   </ItemGroup>
   <ItemGroup>

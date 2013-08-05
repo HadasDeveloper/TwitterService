@@ -32,6 +32,13 @@ namespace TwitterManager.Helper
             return max;
         }
         
+        public static int GetMaxRunID()
+        {
+            DataTable table = DataHelper.GetMaxRunID();
+            int max = table.Rows.Count > 0 ? table.Rows[0].Field<int>("RunId") : 0;
+            return max;
+        }
+
         public static void UpdateScreenNames_LastUpdated(string screenName)
         {
             DataHelper.UpdateScreenNames_LastUpdated(screenName);
@@ -40,6 +47,11 @@ namespace TwitterManager.Helper
         public static void UpdateScreenNames_Deactivate(string screenName)
         {
             DataHelper.UpdateScreenNames_Deactivate(screenName);
+        }
+
+        public static void UpdateQueriesTracking(string screenName, string massage, int runId, int rowesCount)
+        {
+            DataHelper.UpdateQueriesTracking(screenName, massage, Environment.MachineName, runId, rowesCount);
         }
 
         public static OAuthData GetoAuthData()

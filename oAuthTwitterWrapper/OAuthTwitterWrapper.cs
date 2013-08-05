@@ -15,7 +15,7 @@ namespace OAuthTwitterWrapper
         private const string SearchQuery = "%23test";
 		private readonly string searchUrl = string.Format(SearchFormat, SearchQuery);
 
-        public List<XmlDocument> GetMyTimeline(string url,OAuthData oAuthData)
+        public TwitterData GetMyTimeline(string url, OAuthData oAuthData)
         {
             timelineUrl = url;
             var authenticate = new Authenticate();
@@ -24,18 +24,27 @@ namespace OAuthTwitterWrapper
             // Do the timeline
 			var timeLineJson = new Utility().RequstJson(timelineUrl, twitAuthResponse.token_type, twitAuthResponse.access_token);
 
-            List<XmlDocument> xmls = new List<XmlDocument>();
+            TwitterData response = new TwitterData();
+            response.xmls = new List<XmlDocument>();
+
+            if (timeLineJson.StartsWith("Error:"))
+            {
+                response.error = timeLineJson;
+                return response;
+            }
+
+            //List<XmlDocument> xmls = new List<XmlDocument>();
 
             if (timeLineJson == string.Empty || timeLineJson == "[]")
-                return xmls;
+                return response;
 
             timeLineJson = timeLineJson.Substring(3, timeLineJson.Length - 6);
             var timeLines = timeLineJson.Split(new [] { "\"},{\"" }, System.StringSplitOptions.None);
 
             foreach (string line in timeLines)
-                xmls.Add(JsonConvert.DeserializeXmlNode("{\"root\":[{\"" + line + "\"}]}"));              
+                response.xmls.Add(JsonConvert.DeserializeXmlNode("{\"root\":[{\"" + line + "\"}]}"));              
 
-            return xmls;
+            return response;
         }
 
 		public string GetSearch()

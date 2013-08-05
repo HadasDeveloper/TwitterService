@@ -10,13 +10,13 @@ using TwitterManager.Models;
 namespace TwitterManager
 {
     public class Reader
-    {
-        
+    {  
         private bool finishedFlag;
         private bool finishedToProcessScreenName;
         private int pageCounter;
         private int authenticateMessageCounter;
         private int statusCounter;
+        private int runId;
         private bool done;
         private string currentScreenName = "";
         private string timelineUrl;
@@ -35,20 +35,21 @@ namespace TwitterManager
             //This function will get the twitter authentication data for this host name from the db
             oAuthData = DataContext.GetoAuthData();
             if (oAuthData == null)
-                return; 
+                return;
 
             //This function will get the twitter accounts from the db
             List<ScreenNameToLoad> screenNamesToLoad = DataContext.GetScreenNames();//
 
             //List<ScreenNameToLoad> screenNamesToLoad = new List<ScreenNameToLoad>();//
             //ScreenNameToLoad ScreenName = new ScreenNameToLoad();//
-            //ScreenName.ScreenName = "tradefast";//
+            //ScreenName.ScreenName = "dailyfutures";//
             //ScreenName.IsFirstTime = true;//
-
             //screenNamesToLoad.Add(ScreenName);//
 
             if (screenNamesToLoad.Count == 0)
                 return;
+
+            runId = DataContext.GetMaxRunID() + 1;
 
             foreach (var screenNameToLoad in screenNamesToLoad)
             {
@@ -101,11 +102,14 @@ namespace TwitterManager
 
                 OAuthTwitterWrapper.OAuthTwitterWrapper oAuthT = new OAuthTwitterWrapper.OAuthTwitterWrapper();
 
-                List<XmlDocument> statuses = oAuthT.GetMyTimeline(timelineUrl, oAuthData);
+                TwitterData tData = new TwitterData();
+
+                tData = oAuthT.GetMyTimeline(timelineUrl, oAuthData);
                 List<TwitterItem> items = new List<TwitterItem>();
                 
                 // convert xml to twitter item
-                foreach (XmlDocument status in statuses)
+                
+                foreach (XmlDocument status in tData.xmls)
                 {
                     XElement xml = XElement.Load(new XmlNodeReader(status));
                     items.Add(new TwitterItem(xml));
@@ -128,9 +132,14 @@ namespace TwitterManager
                 {
                     Console.WriteLine(" authenticate Message Counter = " + authenticateMessageCounter);
                     DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
+                    DataContext.UpdateQueriesTracking(screenName, tData.error, runId, items.Count);
                     done = true;
                     break;
                 }
+
+                if (tData.error == null)
+                    tData.error = "HTTP/1.1 200 OK";
+                DataContext.UpdateQueriesTracking(screenName, tData.error, runId, items.Count);
             }
 
             finishedFlag = true;

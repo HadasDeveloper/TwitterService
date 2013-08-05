@@ -13,6 +13,10 @@ namespace oAuthTwitterWrapper
 	{
 		public TwitAuthenticateResponse AuthenticateMe(string oAuthConsumerKey, string oAuthConsumerSecret, string oAuthUrl)
 		{
+
+            //oAuthConsumerKey = "sLE6zXtRITflCiPIASkg";
+            //oAuthConsumerSecret = "CZD1Pl6sRfALb2m4SFViMsbC9Hl8Lz38CGumDwgYwEM";
+
             EventLogWriter logWriter = new EventLogWriter("oAuthTwitterWrapper");
 
 			TwitAuthenticateResponse twitAuthResponse;
