@@ -116,7 +116,7 @@ namespace TwitterManager
                     statusCounter++;
                 }
 
-                if (items.Count == 0)
+                if (items.Count < 200)
                 {
                     finishedToProcessScreenName = true;
                     DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
@@ -128,7 +128,7 @@ namespace TwitterManager
 
                 authenticateMessageCounter++;               
 
-                if (authenticateMessageCounter >= 180)
+                if (authenticateMessageCounter >= 100)
                 {
                     Console.WriteLine(" authenticate Message Counter = " + authenticateMessageCounter);
                     DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
