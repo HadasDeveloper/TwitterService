@@ -128,7 +128,7 @@ namespace TwitterManager
 
                 authenticateMessageCounter++;               
 
-                if (authenticateMessageCounter >= 100)
+                if (authenticateMessageCounter >= 120)
                 {
                     Console.WriteLine(" authenticate Message Counter = " + authenticateMessageCounter);
                     DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
