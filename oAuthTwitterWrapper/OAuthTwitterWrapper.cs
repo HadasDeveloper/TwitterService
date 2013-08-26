@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml;
 using Newtonsoft.Json;
 using oAuthTwitterWrapper;
@@ -7,8 +8,6 @@ namespace OAuthTwitterWrapper
 {
     public class OAuthTwitterWrapper
     {
-        private const string OAuthConsumerKey = "dlwIzwzXwBTY0BiPei3Yg";
-        private const string OAuthConsumerSecret = "dorC5hwB8t0a3HlYbMkuW0tN2QClgdI8pahfRMEcJ8";
         private const string OAuthUrl = "https://api.twitter.com/oauth2/token";
         private string timelineUrl; 
         private const string SearchFormat = "https://api.twitter.com/1.1/search/tweets.json?q={0}";
@@ -41,17 +40,25 @@ namespace OAuthTwitterWrapper
             timeLineJson = timeLineJson.Substring(3, timeLineJson.Length - 6);
             var timeLines = timeLineJson.Split(new [] { "\"},{\"" }, System.StringSplitOptions.None);
 
-            foreach (string line in timeLines)
-                response.xmls.Add(JsonConvert.DeserializeXmlNode("{\"root\":[{\"" + line + "\"}]}"));              
+            try
+            {
+                foreach (string line in timeLines)
+                    response.xmls.Add(JsonConvert.DeserializeXmlNode("{\"root\":[{\"" + line + "\"}]}"));         
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+                 
 
             return response;
         }
 
-		public string GetSearch()
+        public string GetSearch(OAuthData oAuthData)
 		{
 			var searchJson = string.Empty;
 			var authenticate = new Authenticate();
-			TwitAuthenticateResponse twitAuthResponse = authenticate.AuthenticateMe(OAuthConsumerKey, OAuthConsumerSecret, OAuthUrl);
+            TwitAuthenticateResponse twitAuthResponse = authenticate.AuthenticateMe(oAuthData.OAuthConsumerKey, oAuthData.OAuthConsumerSecret, OAuthUrl);
 
 			// Do the timeline
 			var utility = new Utility();

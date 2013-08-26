@@ -16,7 +16,7 @@ namespace TServiceSetup
         
         public TService()
         {
-            ServiceName = "TServiceNew";
+            ServiceName = "TServiceNew6";
             InitializeComponent();
         }
 
@@ -26,7 +26,7 @@ namespace TServiceSetup
             timer.Elapsed += OnElapsedTime;
 
             //This statement is used to set interval to 1 minute (= 60,000 milliseconds)
-            timer.Interval = 1200000;//20 min
+            timer.Interval = 900000;//15 min
 
             //enabling the timer
             timer.Enabled = true;

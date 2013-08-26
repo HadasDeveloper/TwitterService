@@ -25,8 +25,10 @@ namespace TwitterManager
         private const string IncludeRts = "1";
         private const string ExcludeReplies = "0";
         private const string Count = "200";
-        private const string TimelineFormatFirstTime = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={0}&amp;include_rts={1}&amp;exclude_replies={2}{3}&amp;count={4}";
-        private const string TimelineFormatNotFirstTime = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={0}&amp;include_rts={1}&amp;exclude_replies={2}&amp;since_id={3}&amp;count={4}";
+        private const string TimelineFormatFirstTime = 
+            "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={0}&amp;include_rts={1}&amp;exclude_replies={2}{3}&amp;count={4}";
+        private const string TimelineFormatNotFirstTime = 
+            "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={0}&amp;include_rts={1}&amp;exclude_replies={2}&amp;since_id={3}&amp;count={4}";
 
         public void Read()
         {
@@ -34,17 +36,11 @@ namespace TwitterManager
 
             //This function will get the twitter authentication data for this host name from the db
             oAuthData = DataContext.GetoAuthData();
-            if (oAuthData == null)
+            if (oAuthData.OAuthConsumerKey == null || oAuthData.OAuthConsumerSecret == null)
                 return;
 
             //This function will get the twitter accounts from the db
-            List<ScreenNameToLoad> screenNamesToLoad = DataContext.GetScreenNames();//
-
-            //List<ScreenNameToLoad> screenNamesToLoad = new List<ScreenNameToLoad>();//
-            //ScreenNameToLoad ScreenName = new ScreenNameToLoad();//
-            //ScreenName.ScreenName = "dailyfutures";//
-            //ScreenName.IsFirstTime = true;//
-            //screenNamesToLoad.Add(ScreenName);//
+            List<ScreenNameToLoad> screenNamesToLoad = DataContext.GetScreenNames();
 
             if (screenNamesToLoad.Count == 0)
                 return;
@@ -53,13 +49,23 @@ namespace TwitterManager
 
             foreach (var screenNameToLoad in screenNamesToLoad)
             {
-                Console.WriteLine(screenNameToLoad.ScreenName);
+                //Console.WriteLine(screenNameToLoad.ScreenName);
                 if (done)
                     break;
 
                 currentScreenName = screenNameToLoad.ScreenName;
-              
-                ReadTweets(screenNameToLoad.ScreenName, screenNameToLoad.IsFirstTime);
+
+                /*-----*/      
+                string maxid = DataContext.GetMaxMessageIdForUser(currentScreenName);
+
+                try
+                {
+                    ReadTweets(screenNameToLoad.ScreenName, screenNameToLoad.IsFirstTime);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Error in foreach(var screenNameToLoad ... : ReadTweets --> " + e.Message );
+                }
 
                 while (!finishedFlag)
                     Thread.Sleep(500);
@@ -67,13 +73,21 @@ namespace TwitterManager
                 finishedFlag = false;
                 finishedToProcessScreenName = false;
                 pageCounter = 0;
-            }
 
+                /*-----*/
+                Console.WriteLine(string.Format("{0, 5}  {1, 5}  {2, 5}", currentScreenName, maxid, DataContext.GetMaxMessageIdForUser(currentScreenName)));
+                Console.WriteLine(string.Format("aouth: {0}", authenticateMessageCounter));
+            }
+            Console.ReadKey();
             DataContext.InsertRowsUpdateLog(Environment.MachineName, statusCounter, authenticateMessageCounter);            
         }
 
         public void ReadTweets(string screenName, bool isFirstTime)
         {
+            bool multipleFlag = false;
+            string maxId = "";
+            string sinceId = "";
+
             while (!finishedToProcessScreenName && pageCounter < 16)
             {
                 pageCounter++;
@@ -91,20 +105,18 @@ namespace TwitterManager
                         Console.WriteLine(e.Message);
                     }
 
-                    string maxId = pageCounter == 1 ? "" : "&amp;max_id=" + maxIdInt;
+                    maxId = pageCounter == 1 ? "" : "&amp;max_id=" + maxIdInt;
                     timelineUrl = string.Format(TimelineFormatFirstTime, screenName, IncludeRts, ExcludeReplies, maxId, Count);
                 }
                 else
-                {
-                    string sinceId = DataContext.GetMaxMessageIdForUser(screenName);
-                    timelineUrl = string.Format(TimelineFormatNotFirstTime, screenName, IncludeRts, ExcludeReplies, sinceId, Count);
+                {   //if first 200 rows get sinceid from DB alse use the original and the id of the oldest new tweet as maxid 
+                    string id = multipleFlag == false ? (sinceId = DataContext.GetMaxMessageIdForUser(screenName)) : sinceId + "&amp;max_id=" + maxId;
+                    timelineUrl = string.Format(TimelineFormatNotFirstTime, screenName, IncludeRts, ExcludeReplies, id, Count);
                 }
 
                 OAuthTwitterWrapper.OAuthTwitterWrapper oAuthT = new OAuthTwitterWrapper.OAuthTwitterWrapper();
 
-                TwitterData tData = new TwitterData();
-
-                tData = oAuthT.GetMyTimeline(timelineUrl, oAuthData);
+                TwitterData tData = oAuthT.GetMyTimeline(timelineUrl, oAuthData);
                 List<TwitterItem> items = new List<TwitterItem>();
                 
                 // convert xml to twitter item
@@ -113,16 +125,31 @@ namespace TwitterManager
                 {
                     XElement xml = XElement.Load(new XmlNodeReader(status));
                     items.Add(new TwitterItem(xml));
+
                     statusCounter++;
                 }
 
                 if (items.Count < 200)
                 {
                     finishedToProcessScreenName = true;
+                    
+                    //insert rows to DB
+                    if (items.Count > 0)
+                        DataContext.InsertTwitterItems(items);
+                    
                     DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
                 }
-                else//insert to DB
+                //insert rows to DB
+                else
+                {
+                    Console.WriteLine(String.Format("sinceid = {0, 2}   maxid = {1, 2} ", sinceId,maxId));
                     DataContext.InsertTwitterItems(items);
+                    multipleFlag = true;
+                    
+                    //get the oldest new tweet's id (maxid)
+                    maxId = items[items.Count - 1].MessageId.ToString();
+                    DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
+                }
 
                 Console.WriteLine("stutus counter = " + items.Count);
 
@@ -131,7 +158,7 @@ namespace TwitterManager
                 if (authenticateMessageCounter >= 120)
                 {
                     Console.WriteLine(" authenticate Message Counter = " + authenticateMessageCounter);
-                    DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
+                    //DataContext.UpdateScreenNames_LastUpdated(currentScreenName);
                     DataContext.UpdateQueriesTracking(screenName, tData.error, runId, items.Count);
                     done = true;
                     break;
@@ -139,6 +166,7 @@ namespace TwitterManager
 
                 if (tData.error == null)
                     tData.error = "HTTP/1.1 200 OK";
+
                 DataContext.UpdateQueriesTracking(screenName, tData.error, runId, items.Count);
             }
 

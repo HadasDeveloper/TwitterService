@@ -77,8 +77,7 @@ namespace TwitterManager.Helper
                 ScreenNameToLoad name = new ScreenNameToLoad
                                             {
                                                 ScreenName = row.Field<string>("screenname"),
-                                                IsFirstTime = row.Field<int>("count") > 0 ? false : true 
-                                                //IsFirstTime = row.Field<int>("count") > 1 ? false : true
+                                                IsFirstTime = row.Field<int>("count") > 0 ? false : true                                            
                                             };
                 names.Add(name);
             }

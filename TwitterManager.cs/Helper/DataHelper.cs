@@ -143,7 +143,7 @@ namespace TwitterManager.Helper
 
         public static void UpdateScreenNames_LastUpdated(string screenName)
         {
-            ExecuteSQL(string.Format(StoredProcedures.SqlUpdateScreenNames_LastUpdated, DateTime.Now, screenName));
+            ExecuteSQL(string.Format(StoredProcedures.SqlUpdateScreenNames_LastUpdated, screenName));
         }
        
         public static void UpdateScreenNames_Deactivate(string screenName)

@@ -15,10 +15,10 @@ namespace TServiceSetup
 
             serviceInstaller = new ServiceInstaller
                                    {
-                                       DisplayName = "TServiceNew",
-                                       ServiceName = "TServiceNew",
+                                       DisplayName = "TServiceNew6",
+                                       ServiceName = "TServiceNew6",
                                        StartType = ServiceStartMode.Automatic,
-                                       Description = "T Service New"
+                                       Description = "T Service New6"
                                    };
 
             processInstaller = new ServiceProcessInstaller {Account = ServiceAccount.LocalSystem};
